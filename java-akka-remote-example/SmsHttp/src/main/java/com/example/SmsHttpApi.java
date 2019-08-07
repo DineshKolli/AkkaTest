@@ -5,7 +5,6 @@ import akka.NotUsed;
 import akka.actor.ActorRef;
 import akka.actor.ActorSelection;
 import akka.actor.ActorSystem;
-import akka.actor.UntypedActor;
 import akka.http.javadsl.ConnectHttp;
 import akka.http.javadsl.Http;
 import akka.http.javadsl.ServerBinding;
@@ -15,18 +14,22 @@ import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
+import akka.pattern.Patterns;
 import akka.stream.ActorMaterializer;
 import akka.stream.javadsl.Flow;
+import akka.util.Timeout;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import example.akka.remote.shared.SmsApiMessages;
 import example.akka.remote.shared.SmsValidationMessage;
+import scala.concurrent.Await;
+import scala.concurrent.Future;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 
 import static akka.http.javadsl.server.PathMatchers.longSegment;
 
@@ -35,7 +38,8 @@ public class SmsHttpApi extends AllDirectives {
     static ActorSelection smsApiActor = null;
     static ActorSystem system = null;
 
-    private ActorSelection route = null;
+    ActorSelection route = system.actorSelection("akka.tcp://SmsValidationCluster@127.0.0.1:2559/user/SmsValidationRouter");
+    ActorSelection selection = system.actorSelection("akka.tcp://SmsDaoActor@127.0.0.1:2565/user/SmsDaoActor");
 
     public static void main(String[] args) throws Exception {
         // boot up server using the route as defined below
@@ -60,36 +64,31 @@ public class SmsHttpApi extends AllDirectives {
 
 
     private CompletionStage<Done> sendSms(final SmsIncomingMessage sms) {
-        smsApiActor = system.actorSelection("akka.tcp://SmsApiService@127.0.0.1:2562/user/SmsApiService");
-
-        route = system.actorSelection("akka.tcp://SmsValidationCluster@127.0.0.1:2559/user/SmsValidationRouter");
-
-        System.out.println("DINESH ------- 0");
-        //SmsApiMessages.Message newMsg = new SmsApiMessages.Message(sms.getFrom(), sms.getTo(), sms.getSms());
-
         SmsValidationMessage.Message newMsg = new SmsValidationMessage.Message(sms.getFrom(), sms.getTo(), sms.getSms());
-        System.out.println("DINESH ------- 1");
-
-         //smsApiActor.tell(newMsg, ActorRef.noSender());
         route.tell(newMsg, ActorRef.noSender());
-        System.out.println("DINESH ------- 2");
-        //return CompletableFuture.completedFuture(Done.getInstance());
         return CompletableFuture.completedFuture(Done.getInstance());
     }
-
-
 
     private Route createRoute() {
         return concat(
                 get(() ->
-                        pathPrefix("item", () ->
-                                path(longSegment(), (Long id) -> {
-                                    final CompletionStage<Optional<List<SmsIncomingMessage>>> futureMaybeItem = fetchSmsList(id);
+                        pathPrefix("getSms", () ->
+                            path(longSegment(), (Long id) -> {
+                            final CompletionStage<Optional<List<SmsIncomingMessage>>> futureMaybeItem = fetchSms(id);
+                            return onSuccess(() -> futureMaybeItem, maybeItem ->
+                                    maybeItem.map(item -> completeOK(item, Jackson.marshaller()))
+                                            .orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found"))
+                            );
+                        }))),
+                get(() ->
+                        pathPrefix("getAllSms", () -> {
+                                //path(longSegment(), (Long id) -> {
+                                    final CompletionStage<Optional<List<SmsIncomingMessage>>> futureMaybeItem = fetchSmsList();
                                     return onSuccess(() -> futureMaybeItem, maybeItem ->
                                             maybeItem.map(item -> completeOK(item, Jackson.marshaller()))
                                                     .orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found"))
                                     );
-                                }))),
+                                })),
 
                  post(() ->
                         path("sendSms", () ->
@@ -104,26 +103,20 @@ public class SmsHttpApi extends AllDirectives {
 
     }
 
-
     private static class SmsIncomingMessage {
-
         final String from;
+        final String to;
+        final String sms;
 
         public String getFrom() {
             return from;
         }
-
         public String getTo() {
             return to;
         }
-
         public String getSms() {
             return sms;
         }
-
-        final String to;
-        final String sms;
-
         @JsonCreator
         SmsIncomingMessage(@JsonProperty("from") String from,
                            @JsonProperty("to") String to,
@@ -132,17 +125,38 @@ public class SmsHttpApi extends AllDirectives {
             this.to = to;
             this.sms = sms;
         }
-
-
     }
 
-    CompletionStage<Optional<List<SmsIncomingMessage>>> fetchSmsList(Long fromNumber)
+    CompletionStage<Optional<List<SmsIncomingMessage>>> fetchSms(Long from)
     {
-        String fromString = fromNumber + "";
-        ActorSelection selection = system.actorSelection("akka.tcp://SmsDaoActor@127.0.0.1:2565/user/SmsDaoActor");
-        selection.tell("fetchAllSMS", ActorRef.noSender());
-        List<SmsIncomingMessage> list = new ArrayList<>();
-        list.add(new SmsIncomingMessage(fromString, "1234567890", "Reply SMS"));
-        return CompletableFuture.completedFuture(Optional.of(list));
+        String fromString = from + "";
+        Timeout timeout = new Timeout(100000, TimeUnit.MILLISECONDS);
+        Future<Object> future = Patterns.ask(selection, fromString, timeout);
+
+        try {
+            List<SmsIncomingMessage> reply = (ArrayList<SmsIncomingMessage>) Await.result(future, timeout.duration());
+            System.out.println("Total SMS requests count in DB is " + reply.size());
+            return CompletableFuture.completedFuture(Optional.of(reply));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    CompletionStage<Optional<List<SmsIncomingMessage>>> fetchSmsList()
+    {
+        Timeout timeout = new Timeout(100000, TimeUnit.MILLISECONDS);
+        Future<Object> future = Patterns.ask(selection, "fetchAllSMS", timeout);
+
+        try {
+            List<SmsIncomingMessage> reply = (ArrayList<SmsIncomingMessage>) Await.result(future, timeout.duration());
+            System.out.println("Total SMS requests count in DB is " + reply.size());
+            return CompletableFuture.completedFuture(Optional.of(reply));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

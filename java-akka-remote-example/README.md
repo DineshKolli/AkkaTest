@@ -3,22 +3,28 @@ Akka Remote Example in Java
 
 ## Introduction
 This project was made while testing the Akka Remoting features.
-It contains three modules; a Client, a Server and a LoggerEnvironment. The two types of Akka Remoting are tested; Creation and Lookup.
+It contains five modules; a SmsApi, a SmsValidator, a SmsDao and a SmsHttp. 
 
-##### Client
-The client uses remote lookup to get an `ActorSelection` of a Remote Actor (running on the Server.) and sends a message to it. 
+##### Shared
+The has the Messages that are shared between all the Actors. 
 
-##### Server
-The server creates a `CalculatorActor` and handles incoming messages.  
-The server also creates a `LoggingActor` which is (remotely) deployed on the `LoggerEnvironment`.
+##### SmsApi
+The SmsApi is a actor which is used to pump Sms Messages from while loop. 
 
-##### LoggerEnvironment
-Essentially nothing more than a container. The server will create an actor on this environment.
+##### SmsDao
+The SmsDao writes the Sms into DB
+
+##### SmsValidator
+The SmsValidator is used to perform basic validation, DNC and CC.
+
+##### SmsHttp
+The SmsHttp is to send POST & GET requests via HTTP.
+
 
 ## How to run
 You can run the program like every ordinary Java main program. Make sure you have `mvn clean install`ed the project before to get the Akka dependency.
 It's important to run the projects in the following order:
 
-1. LoggerEnvironment
-2. Server
-3. Client
+1. SmsDao
+2. SmsValidator
+3. SmsHttp or SmsApi

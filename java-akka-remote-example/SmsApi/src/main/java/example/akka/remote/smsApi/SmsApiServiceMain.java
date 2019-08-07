@@ -10,8 +10,6 @@ public class SmsApiServiceMain {
     public static void main(String[] args) {
         ActorSystem system = ActorSystem.create("SmsApiService", ConfigFactory.load());
         ActorRef apiService = system.actorOf(Props.create(SmsApiService.class));
-
-
         for(int i = 1; i < 100; i++) {
             apiService.tell(new SmsApiMessages.Message(i+"", "1234567"+i, "This is my SMS "+i), ActorRef.noSender());
             try {

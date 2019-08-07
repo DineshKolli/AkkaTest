@@ -16,10 +16,7 @@ import example.akka.remote.shared.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -48,22 +45,27 @@ public class SmsDaoService extends UntypedActor {
     private static final String selectAllUsers =
             "SELECT USERFROM, TO, SMS FROM SMS_DB";
 
+    private static final String selectSingleUsers =
+            "SELECT USERFROM, TO, SMS FROM SMS_DB WHERE USERFROM =";
 
-    public Set<SmsDaoMessage.Message> fetchSMSDetails()
+    public Set<SmsDaoMessage.Message> fetchSMSDetails(String singleSms)
     {
-        final Source<SmsDaoMessage.Message, NotUsed> slickSource =
-                Slick.source(
-                        session, selectAllUsers, (SlickRow row) -> new SmsDaoMessage.Message(row.nextString(), row.nextString(), row.nextString()));
+        Source<SmsDaoMessage.Message, NotUsed> slickSource = null;
+        if(singleSms != null && singleSms.length() > 0) {
+            slickSource =  Slick.source(
+                    session, selectSingleUsers + singleSms, (SlickRow row) -> new SmsDaoMessage.Message(row.nextString(), row.nextString(), row.nextString()));
+        }
+        else
+        {
+            slickSource = Slick.source(
+                    session, selectAllUsers, (SlickRow row) -> new SmsDaoMessage.Message(row.nextString(), row.nextString(), row.nextString()));
+        }
         final CompletionStage<List<SmsDaoMessage.Message>> foundUsersFuture =
                 slickSource.runWith(Sink.seq(), materializer);
         Set<SmsDaoMessage.Message> foundUsers = null;
         try {
             foundUsers = new HashSet<>(foundUsersFuture.toCompletableFuture().get(3, TimeUnit.SECONDS));
-
-
-
             log.info("Total number of SMS in DB " + foundUsers.size());
-
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
@@ -72,7 +74,6 @@ public class SmsDaoService extends UntypedActor {
             e.printStackTrace();
         }
         return foundUsers;
-
     }
 
     public void insertSMSMessage(SmsDaoMessage.Message message) throws Exception {
@@ -126,11 +127,21 @@ public class SmsDaoService extends UntypedActor {
         else if(message instanceof  String) {
             if(((String) message).equalsIgnoreCase("fetchAllSms"))
             {
-                Set<SmsDaoMessage.Message> data = fetchSMSDetails();
-
-                getSender().tell(data, self());
-
-
+                Set<SmsDaoMessage.Message> data = fetchSMSDetails(null);
+                ArrayList<SmsDaoMessage.Message> aList = new ArrayList<SmsDaoMessage.Message>(data);
+                getSender().tell(aList, self());
+                Iterator<SmsDaoMessage.Message> it = data.iterator();
+                while(it.hasNext()){
+                    SmsDaoMessage.Message smsData = it.next();
+                    log.info("From {}, To {}, SMS {}", smsData.getFromNumber(), smsData.getToNumber(), smsData.getSmsMessage() );
+                }
+                log.info("------------------> Total number of entries in DB " + data.size());
+            }
+            else
+            {
+                Set<SmsDaoMessage.Message> data = fetchSMSDetails((String) message);
+                ArrayList<SmsDaoMessage.Message> aList = new ArrayList<SmsDaoMessage.Message>(data);
+                getSender().tell(aList, self());
                 Iterator<SmsDaoMessage.Message> it = data.iterator();
                 while(it.hasNext()){
                     SmsDaoMessage.Message smsData = it.next();
@@ -139,11 +150,11 @@ public class SmsDaoService extends UntypedActor {
                 log.info("------------------> Total number of entries in DB " + data.size());
             }
         }
+
         else {
             unhandled(message);
         }
     }
-
 
     static {
         system  = ActorSystem.create();

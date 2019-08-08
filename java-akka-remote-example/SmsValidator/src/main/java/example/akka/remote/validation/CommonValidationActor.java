@@ -20,10 +20,12 @@ public class CommonValidationActor extends UntypedActor {
     private ActorRef dncActor = getContext().actorOf(Props.create(DncCheckService.class), "DncCheckActor");
 
 
-    private ActorSelection selection = getContext().actorSelection("akka.tcp://SmsValidationInterfaceDispatcherCluster@127.0.0.1:2558/user/SmsValidationInterfaceDispatcher");
 
-    static ActorSystem actorSystem = null;
-    static ActorRef publisher = null;
+
+   // private ActorSelection selection = getContext().actorSelection("akka.tcp://SmsValidationInterfaceDispatcherCluster@127.0.0.1:2558/user/SmsValidationInterfaceDispatcher");
+
+    //static ActorSystem actorSystem = null;
+    ActorRef publisher = null;
 
     private static Config setupClusterNodeConfig(String port) {
 
@@ -41,9 +43,12 @@ public class CommonValidationActor extends UntypedActor {
     }
 
 
-    //public CommonValidationActor(ActorSystem actorSystem)
-    public CommonValidationActor()
+    public CommonValidationActor(ActorSystem actorSystem)
+    //public CommonValidationActor()
     {
+        this.publisher = actorSystem.actorOf(Props.create(Publisher.class), "sender2");
+
+        //this.publisher = publisher;
         /*
         if(actorSystem == null) {
             ActorSystem actorSystem2 = ActorSystem.create("SmsValidationCluster", setupClusterNodeConfig("0"));
@@ -155,8 +160,10 @@ public class CommonValidationActor extends UntypedActor {
                         fromToMessage.remove(from);
                         fromToActor.remove(from);
                         apiActor.tell(new SmsValidationMessage.ValidationResponse("Validation Success for from " + from), getSelf());
-                        selection.tell(new SmsDaoMessage.Message(origMessage.getFromNumber(), origMessage.getToNumber(), origMessage.getSmsMessage()), getSelf());
+                        //selection.tell(new SmsDaoMessage.Message(origMessage.getFromNumber(), origMessage.getToNumber(), origMessage.getSmsMessage()), getSelf());
 
+                        //ActorRef publisher2 = getContext().system().actorOf(Props.create(Publisher.class), "sender");
+                        this.publisher.tell(new SmsDaoMessage.Message(origMessage.getFromNumber(), origMessage.getToNumber(), origMessage.getSmsMessage()), getSelf());
 
                         //mediator.tell(new DistributedPubSubMediator.Put(publisher), publisher);
                         //getMyPublisher().tell(new SmsDaoMessage.Message(origMessage.getFromNumber(), origMessage.getToNumber(), origMessage.getSmsMessage()), getMyPublisher());
@@ -198,7 +205,10 @@ public class CommonValidationActor extends UntypedActor {
                         fromToMessage.remove(from);
                         fromToActor.remove(from);
                         apiActor.tell(new SmsValidationMessage.ValidationResponse("Validation Success for from " + from), getSelf());
-                        selection.tell(new SmsDaoMessage.Message(origMessage.getFromNumber(), origMessage.getToNumber(), origMessage.getSmsMessage()), getSelf());
+                        //selection.tell(new SmsDaoMessage.Message(origMessage.getFromNumber(), origMessage.getToNumber(), origMessage.getSmsMessage()), getSelf());
+
+                        //ActorRef publisher2 = getContext().system().actorOf(Props.create(Publisher.class), "sender");
+                        this.publisher.tell(new SmsDaoMessage.Message(origMessage.getFromNumber(), origMessage.getToNumber(), origMessage.getSmsMessage()), getSelf());
 
 
                         //mediator.tell(new DistributedPubSubMediator.Put(publisher), publisher);

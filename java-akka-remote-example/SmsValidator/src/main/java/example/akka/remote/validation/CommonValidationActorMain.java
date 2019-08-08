@@ -18,8 +18,8 @@ public class CommonValidationActorMain {
         if (args.length == 0) {
             //startupClusterNodes(Arrays.asList("2556", "2559", "2558", "2557"));
             //startupClusterNodes(Arrays.asList("2556", "2558", "2800", "2559"));
-            startupClusterNodes(Arrays.asList("2556", "2558", "2559"));
-            //startupClusterNodes(Arrays.asList("2556", "2800"));
+            //startupClusterNodes(Arrays.asList("2556", "2558", "2559"));
+            startupClusterNodes(Arrays.asList("2800", "2559", "2556"));
         } else {
             startupClusterNodes(Arrays.asList(args));
         }
@@ -37,6 +37,8 @@ public class CommonValidationActorMain {
                 ActorSystem actorSystem = ActorSystem.create("SmsValidationInterfaceDispatcherCluster", setupClusterNodeConfig(port));
                 actorSystem.actorOf(Props.create(SmsValidationInterfaceDispatcher.class), "SmsValidationInterfaceDispatcher");
                 actorSystem.log().info("Akka node {}", actorSystem.provider().getDefaultAddress());
+
+
             }
             else if(port.equalsIgnoreCase("2559"))
             {
@@ -44,16 +46,24 @@ public class CommonValidationActorMain {
                 actorSystem.actorOf(Props.create(SmsValidationRouter.class), "SmsValidationRouter");
                 actorSystem.log().info("Akka node {}", actorSystem.provider().getDefaultAddress());
             }
-            else if(port.equalsIgnoreCase("2800"))
-            {
-                ActorSystem actorSystem = ActorSystem.create("SmsValidationInterfaceDispatcherCluster", setupClusterNodeConfig(port));
+            else if(port.equalsIgnoreCase("2800")) {
+                ActorSystem actorSystem = ActorSystem.create("SmsValidationCluster", setupClusterNodeConfig(port));
                 actorSystem.actorOf(Props.create(SmsValidationInterfaceDispatcher.class), "SmsValidationInterfaceDispatcher");
-
-                ActorRef mediator = DistributedPubSub.get(actorSystem).mediator();
                 actorSystem.log().info("Akka node {}", actorSystem.provider().getDefaultAddress());
 
+                ActorRef mediator = DistributedPubSub.get(actorSystem).mediator();
                 ActorRef publisher = actorSystem.actorOf(Props.create(Publisher.class), "sender");
                 mediator.tell(new DistributedPubSubMediator.Put(publisher), publisher);
+
+                //ActorSystem actorSystem2 = ActorSystem.create("SmsValidationCluster", setupClusterNodeConfig("2556"));
+                //actorSystem2.actorOf(Props.create(CommonValidationActor.class, actorSystem2), "CommonValidationActor");
+                //actorSystem2.log().info("Akka node {}", actorSystem2.provider().getDefaultAddress());
+
+                //ActorRef publisher2 = actorSystem2.actorOf(Props.create(Publisher.class), "sender2");
+
+
+
+                /*
                 try {
                     Thread.sleep(5000);
                 }
@@ -64,12 +74,36 @@ public class CommonValidationActorMain {
                 publisher.tell(new SmsDaoMessage.Message("1234","1234567890", "This is my SMS"), publisher);
 
 
+                try {
+                    Thread.sleep(5000);
+                }
+                catch(Exception e)
+                {
+                    actorSystem2.log().info("Error ====== ");
+                }
+                publisher2.tell(new SmsDaoMessage.Message("1233","1234567890", "This is my SMS"), null);
+
+                 */
+
             }
             else {
-                ActorSystem actorSystemNull = null;
                 ActorSystem actorSystem = ActorSystem.create("SmsValidationCluster", setupClusterNodeConfig(port));
-                actorSystem.actorOf(Props.create(CommonValidationActor.class), "CommonValidationActor");
+                actorSystem.actorOf(Props.create(CommonValidationActor.class, actorSystem), "CommonValidationActor");
                 actorSystem.log().info("Akka node {}", actorSystem.provider().getDefaultAddress());
+
+                /*
+                ActorRef publisher = actorSystem.actorOf(Props.create(Publisher.class), "sender2");
+                try {
+                    Thread.sleep(5000);
+                }
+                catch(Exception e)
+                {
+                    actorSystem.log().info("Error ====== ");
+                }
+                System.out.println("Sending 1233 =============================================================== ");
+                publisher.tell(new SmsDaoMessage.Message("1233","1234567890", "This is my SMS"), null);
+*/
+
             }
 
         }
@@ -83,11 +117,9 @@ public class CommonValidationActorMain {
                     .withFallback(ConfigFactory.load("myRouter"));
         }
         else if(port.equalsIgnoreCase("2800")) {
-
-                return ConfigFactory.parseString(
-                            "akka.actor.provider = \"cluster\"\n"
-                                    + "akka.remote.netty.tcp.port=0\n"
-                                    + "akka.remote.artery.canonical.port=0");
+            return ConfigFactory.parseString(
+                    String.format("akka.remote.netty.tcp.port=%s%n", port))
+                    .withFallback(ConfigFactory.load());
 
 /*
             return ConfigFactory.parseString(

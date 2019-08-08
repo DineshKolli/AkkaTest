@@ -12,29 +12,31 @@ import example.akka.remote.shared.SmsDaoMessage;
 
 public class PubSubTestMain {
 
+
+
+
     public static void main(String... args) {
 
 
-        ActorSystem actorSystem = ActorSystem.create("SmsValidationInterfaceDispatcherCluster", setupClusterNodeConfig("2800"));
+
+        ActorSystem actorSystem = ActorSystem.create("SmsValidationCluster", setupClusterNodeConfig("2800"));
+        //ActorSystem actorSystem = ActorSystem.create("SmsValidationInterfaceDispatcherCluster", setupClusterNodeConfig("2800"));
         actorSystem.actorOf(Props.create(SmsValidationInterfaceDispatcher.class), "SmsValidationInterfaceDispatcher");
 
-
-        ActorSelection selection = actorSystem.actorSelection("/user/SmsValidationInterfaceDispatcher");
-        System.out.println("-------> Dinesh");
-        selection.tell(new SmsDaoMessage.Message("1234","1234567890", "This is my SMS"), ActorRef.noSender());
-
-    /*
         ActorRef mediator = DistributedPubSub.get(actorSystem).mediator();
         ActorRef publisher = actorSystem.actorOf(Props.create(Publisher.class), "sender");
         mediator.tell(new DistributedPubSubMediator.Put(publisher), publisher);
+
 
         ActorSystem actorSystem2 = ActorSystem.create("SmsValidationCluster", setupClusterNodeConfig("2556"));
         actorSystem2.actorOf(Props.create(CommonValidationActor.class), "CommonValidationActor");
         actorSystem2.log().info("Akka node {}", actorSystem2.provider().getDefaultAddress());
 
-        ActorRef mediator2 = DistributedPubSub.get(actorSystem2).mediator();
-        ActorRef publisher2 = actorSystem2.actorOf(Props.create(Publisher.class), "sender");
-        mediator2.tell(new DistributedPubSubMediator.Put(publisher2), publisher2);
+      //  ActorRef mediator2 = DistributedPubSub.get(actorSystem2).mediator();
+        ActorRef publisher2 = actorSystem2.actorOf(Props.create(Publisher.class), "sender2");
+        //mediator2.tell(new DistributedPubSubMediator.Put(mediator2), publisher2);
+
+
 
         try {
             Thread.sleep(5000);
@@ -43,8 +45,9 @@ public class PubSubTestMain {
         {
             actorSystem.log().info("Error ====== ");
         }
-        publisher2.tell(new SmsDaoMessage.Message("1234","1234567890", "This is my SMS"), publisher);
-*/
+        publisher.tell(new SmsDaoMessage.Message("5678","1234567890", "This is my SMS"), publisher);
+        publisher2.tell(new SmsDaoMessage.Message("1234","1234567890", "This is my SMS"), null);
+
     }
 
     private static Config setupClusterNodeConfig(String port) {

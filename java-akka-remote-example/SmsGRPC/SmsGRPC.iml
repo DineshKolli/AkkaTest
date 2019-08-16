@@ -58,9 +58,6 @@
     <orderEntry type="library" name="Maven: io.grpc:grpc-stub:1.22.1" level="project" />
     <orderEntry type="library" name="Maven: io.grpc:grpc-api:1.22.1" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: org.mortbay.jetty.alpn:jetty-alpn-agent:2.0.9" level="project" />
-    <orderEntry type="module" module-name="Shared" />
-    <orderEntry type="library" name="Maven: com.typesafe.akka:akka-remote_2.11:2.3.7" level="project" />
-    <orderEntry type="library" name="Maven: com.typesafe.akka:akka-actor_2.11:2.3.7" level="project" />
-    <orderEntry type="library" name="Maven: org.uncommons.maths:uncommons-maths:1.2.2a" level="project" />
+    <orderEntry type="library" name="Maven: akka:Shared:1.0-SNAPSHOT" level="project" />
   </component>
 </module>

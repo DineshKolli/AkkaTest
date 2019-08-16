@@ -15,6 +15,7 @@
         <module>SmsDao</module>
         <module>LoggerEnvironment</module>
         <module>SmsHttp</module>
+        <module>SmsGRPC</module>
     </modules>
 
     <dependencies>

@@ -16,6 +16,8 @@ import example.akka.remote.shared.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -26,12 +28,13 @@ import java.util.function.Function;
 public class SmsDaoService extends UntypedActor {
     private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-    private ActorRef loggingActor = getContext().actorOf(Props.create(LoggingActor.class), "LoggingActor");
+    //private ActorRef loggingActor = getContext().actorOf(Props.create(LoggingActor.class), "LoggingActor");
 
     private static final SlickSession session = SlickSession.forConfig("database.slick-h2");
 
     static ActorSystem system  = null;
     static Materializer materializer = null;
+    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
 
     private static final Function<SmsDaoMessage.Message, String> insertUser =
@@ -64,7 +67,7 @@ public class SmsDaoService extends UntypedActor {
                 slickSource.runWith(Sink.seq(), materializer);
         Set<SmsDaoMessage.Message> foundUsers = null;
         try {
-            foundUsers = new HashSet<>(foundUsersFuture.toCompletableFuture().get(3, TimeUnit.SECONDS));
+            foundUsers = new HashSet<>(foundUsersFuture.toCompletableFuture().get(30, TimeUnit.SECONDS));
             log.info("Total number of SMS in DB " + foundUsers.size());
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -121,7 +124,13 @@ public class SmsDaoService extends UntypedActor {
             String from = ((SmsDaoMessage.Message) message).getFromNumber();
             String to = ((SmsDaoMessage.Message) message).getToNumber();
             String smsMessage = ((SmsDaoMessage.Message) message).getSmsMessage();
-            updateSmsCounter((SmsDaoMessage.Message) message);
+
+
+            LocalDateTime now = LocalDateTime.now();
+            //System.out.println("Start time is " + dtf.format(now));
+
+            SmsDaoMessage.Message newMsg = new SmsDaoMessage.Message(from, to , smsMessage + " - time " + dtf.format(now));
+            updateSmsCounter((SmsDaoMessage.Message) newMsg);
             getSender().tell(new SmsDaoMessage.Response("DAO Operation Done for from " + from), getSelf());
         }
         else if(message instanceof  String) {

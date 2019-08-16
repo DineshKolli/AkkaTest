@@ -52,9 +52,9 @@ public class SmsHttpApi extends AllDirectives {
 
         final Flow<HttpRequest, HttpResponse, NotUsed> routeFlow = app.createRoute().flow(system, materializer);
         final CompletionStage<ServerBinding> binding = http.bindAndHandle(routeFlow,
-                ConnectHttp.toHost("localhost", 8080), materializer);
+                ConnectHttp.toHost("localhost", 8082), materializer);
 
-        System.out.println("Server online at http://localhost:8080/\nPress RETURN to stop...");
+        System.out.println("Server online at http://localhost:8082/\nPress RETURN to stop...");
         System.in.read(); // let it run until user presses return
 
         binding

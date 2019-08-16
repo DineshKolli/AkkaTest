@@ -19,11 +19,14 @@ public class DncCheckService extends UntypedActor {
     public void dncCheck(SmsValidationMessage.Message message)
     {
 
+        /*
         try {
             Thread.sleep(1);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+         */
         log.info("DNC Check done for {}", message.getFromNumber());
     }
 

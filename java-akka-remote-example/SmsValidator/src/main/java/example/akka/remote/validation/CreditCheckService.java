@@ -19,11 +19,14 @@ public class CreditCheckService extends UntypedActor {
     public void checkCredit(SmsValidationMessage.Message message)
     {
 
+        /*
         try {
             Thread.sleep(1);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+         */
         log.info("Credit Check done for {}", message.getFromNumber());
     }
 

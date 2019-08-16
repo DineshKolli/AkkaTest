@@ -52,7 +52,7 @@ class SmsClient {
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
     LocalDateTime now = LocalDateTime.now();
     System.out.println("Start time is " + dtf.format(now));
-    for(int i = 100002; i < 100005; i++) {
+    for(int i = 300002; i < 300005; i++) {
       SmsRequest request = SmsRequest.newBuilder().setFrom("" + i).setTo("9986459050").setSms("My SMS" + i).build();
       CompletionStage<SmsReply> reply = client.sendSms(request);
       reply.toCompletableFuture().get(5, TimeUnit.SECONDS);

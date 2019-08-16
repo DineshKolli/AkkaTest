@@ -51,6 +51,9 @@ public class SmsDaoService extends UntypedActor {
     private static final String selectSingleUsers =
             "SELECT USERFROM, TO, SMS FROM SMS_DB WHERE USERFROM =";
 
+    private static final Function<String, String>  emptyDatabase =
+            (delete) -> "TRUNCATE TABLE SMS_DB";
+
     public Set<SmsDaoMessage.Message> fetchSMSDetails(String singleSms)
     {
         Source<SmsDaoMessage.Message, NotUsed> slickSource = null;
@@ -103,6 +106,27 @@ public class SmsDaoService extends UntypedActor {
         }
     }
 
+    public void emptyDatabase(String delete)
+    {
+
+        final Sink<String, CompletionStage<Done>> slickSink  = Slick.sink(session, emptyDatabase);
+        Set<String> users = new HashSet<>();
+        users.add(delete);
+        Source<String, NotUsed> usersSource = Source.from(users);
+
+        final CompletionStage<Done> insertionResultFuture =
+                usersSource.runWith(slickSink, materializer);
+        try {
+            insertionResultFuture.toCompletableFuture().get(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void updateSmsCounter(SmsDaoMessage.Message message)
     {
         log.info("All Processing is Done for {}", message.getSmsMessage());
@@ -135,6 +159,22 @@ public class SmsDaoService extends UntypedActor {
         }
         else if(message instanceof  String) {
             if(((String) message).equalsIgnoreCase("fetchAllSms"))
+            {
+                Set<SmsDaoMessage.Message> data = fetchSMSDetails(null);
+                ArrayList<SmsDaoMessage.Message> aList = new ArrayList<SmsDaoMessage.Message>(data);
+                getSender().tell(aList, self());
+                Iterator<SmsDaoMessage.Message> it = data.iterator();
+                while(it.hasNext()){
+                    SmsDaoMessage.Message smsData = it.next();
+                    log.info("From {}, To {}, SMS {}", smsData.getFromNumber(), smsData.getToNumber(), smsData.getSmsMessage() );
+                }
+                log.info("------------------> Total number of entries in DB " + data.size());
+            }
+            else if(((String) message).equalsIgnoreCase("delete"))
+            {
+                emptyDatabase("delete");
+            }
+            else if(((String) message).equalsIgnoreCase("getCount"))
             {
                 Set<SmsDaoMessage.Message> data = fetchSMSDetails(null);
                 ArrayList<SmsDaoMessage.Message> aList = new ArrayList<SmsDaoMessage.Message>(data);

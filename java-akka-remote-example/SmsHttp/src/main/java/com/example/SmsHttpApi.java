@@ -39,7 +39,7 @@ public class SmsHttpApi extends AllDirectives {
     static ActorSystem system = null;
 
     ActorSelection route = system.actorSelection("akka.tcp://SmsValidationCluster@127.0.0.1:2559/user/SmsValidationRouter");
-    ActorSelection selection = system.actorSelection("akka.tcp://SmsDaoActor@127.0.0.1:2565/user/SmsDaoActor");
+    ActorSelection selection = system.actorSelection("akka.tcp://SmsDaoCluster@127.0.0.1:2565/user/SmsDaoRouter");
 
     public static void main(String[] args) throws Exception {
         // boot up server using the route as defined below
@@ -80,6 +80,15 @@ public class SmsHttpApi extends AllDirectives {
                                             .orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found"))
                             );
                         }))),
+                get(() ->
+                        pathPrefix("emptyDatabase", () -> {
+                               // path(longSegment(), (Long id) -> {
+                                    final CompletionStage<Optional<String>> futureMaybeItem = emptyDatabase();
+                                    return onSuccess(() -> futureMaybeItem, maybeItem ->
+                                            maybeItem.map(item -> completeOK(item, Jackson.marshaller()))
+                                                    .orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found"))
+                                    );
+                                })),
                 get(() ->
                         pathPrefix("getAllSms", () -> {
                                 //path(longSegment(), (Long id) -> {
@@ -143,6 +152,23 @@ public class SmsHttpApi extends AllDirectives {
         }
         return null;
     }
+
+    CompletionStage<Optional<String>> emptyDatabase()
+    {
+        Timeout timeout = new Timeout(100000, TimeUnit.MILLISECONDS);
+        Future<Object> future = Patterns.ask(selection, "delete", timeout);
+
+        try {
+            String reply = (String) Await.result(future, timeout.duration());
+            System.out.println("Total SMS requests count in DB is " + reply);
+            return CompletableFuture.completedFuture(Optional.of(reply));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
     CompletionStage<Optional<List<SmsIncomingMessage>>> fetchSmsList()
     {

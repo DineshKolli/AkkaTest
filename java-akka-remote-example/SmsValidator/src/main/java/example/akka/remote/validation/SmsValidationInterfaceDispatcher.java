@@ -15,7 +15,7 @@ import example.akka.remote.shared.SmsValidationMessage;
 public class SmsValidationInterfaceDispatcher extends UntypedActor {
     private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-    private ActorSelection selection = getContext().actorSelection("akka.tcp://SmsDaoActor@127.0.0.1:2565/user/SmsDaoActor");
+    private ActorSelection selection = getContext().actorSelection("akka.tcp://SmsDaoCluster@127.0.0.1:2565/user/SmsDaoRouter");
 
     public SmsValidationInterfaceDispatcher() {
         ActorRef mediator = DistributedPubSub.get(getContext().system()).mediator();

@@ -9,11 +9,11 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>Shared</module>
+        <module>SmsShared</module>
         <module>SmsApi</module>
         <module>SmsValidator</module>
         <module>SmsDao</module>
-        <module>LoggerEnvironment</module>
+        <module>SmsLoggerEnvironment</module>
         <module>SmsHttp</module>
         <module>SmsGRPC</module>
     </modules>

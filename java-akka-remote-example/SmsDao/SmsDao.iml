@@ -12,11 +12,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="h2-1.4.1991" level="project" />
-    <orderEntry type="module" module-name="Shared" />
+    <orderEntry type="library" name="Maven: akka:Shared:1.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: com.lightbend.akka:akka-stream-alpakka-slick_2.12:1.1.0" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang:scala-library:2.12.7" level="project" />
     <orderEntry type="library" name="Maven: com.typesafe.akka:akka-stream_2.12:2.5.23" level="project" />
-    <orderEntry type="library" name="Maven: com.typesafe.akka:akka-protobuf_2.12:2.5.23" level="project" />
     <orderEntry type="library" name="Maven: org.reactivestreams:reactive-streams:1.0.2" level="project" />
     <orderEntry type="library" name="Maven: com.typesafe:ssl-config-core_2.12:0.3.7" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-parser-combinators_2.12:1.1.1" level="project" />
@@ -28,10 +27,6 @@
     <orderEntry type="library" name="Maven: com.typesafe.akka:akka-cluster-tools_2.12:2.5.23" level="project" />
     <orderEntry type="library" name="Maven: com.typesafe.akka:akka-coordination_2.12:2.5.23" level="project" />
     <orderEntry type="library" name="Maven: com.typesafe.akka:akka-cluster_2.12:2.5.23" level="project" />
-    <orderEntry type="library" name="Maven: com.typesafe.akka:akka-remote_2.12:2.5.23" level="project" />
-    <orderEntry type="library" name="Maven: io.aeron:aeron-driver:1.15.1" level="project" />
-    <orderEntry type="library" name="Maven: org.agrona:agrona:0.9.31" level="project" />
-    <orderEntry type="library" name="Maven: io.aeron:aeron-client:1.15.1" level="project" />
     <orderEntry type="library" name="Maven: com.typesafe.akka:akka-slf4j_2.12:2.5.23" level="project" />
     <orderEntry type="library" name="Maven: com.typesafe.akka:akka-actor_2.12:2.5.23" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-java8-compat_2.12:0.8.0" level="project" />
@@ -44,11 +39,12 @@
     <orderEntry type="library" name="Maven: com.typesafe.akka:akka-parsing_2.12:10.1.7" level="project" />
     <orderEntry type="library" name="Maven: com.typesafe.akka:akka-http-spray-json_2.12:10.1.7" level="project" />
     <orderEntry type="library" name="Maven: io.spray:spray-json_2.12:1.3.5" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: com.h2database:h2:1.4.199" level="project" />
-    <orderEntry type="library" name="Maven: com.typesafe.akka:akka-remote_2.11:2.3.7" level="project" />
-    <orderEntry type="library" name="Maven: com.typesafe.akka:akka-actor_2.11:2.3.7" level="project" />
-    <orderEntry type="library" name="Maven: io.netty:netty:3.8.0.Final" level="project" />
-    <orderEntry type="library" name="Maven: com.google.protobuf:protobuf-java:2.5.0" level="project" />
-    <orderEntry type="library" name="Maven: org.uncommons.maths:uncommons-maths:1.2.2a" level="project" />
+    <orderEntry type="library" name="Maven: com.h2database:h2:1.4.199" level="project" />
+    <orderEntry type="library" name="Maven: com.typesafe.akka:akka-remote_2.12:2.5.23" level="project" />
+    <orderEntry type="library" name="Maven: com.typesafe.akka:akka-protobuf_2.12:2.5.23" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty:3.10.6.Final" level="project" />
+    <orderEntry type="library" name="Maven: io.aeron:aeron-driver:1.15.1" level="project" />
+    <orderEntry type="library" name="Maven: org.agrona:agrona:0.9.31" level="project" />
+    <orderEntry type="library" name="Maven: io.aeron:aeron-client:1.15.1" level="project" />
   </component>
 </module>

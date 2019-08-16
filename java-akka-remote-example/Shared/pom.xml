@@ -9,5 +9,24 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>Shared</artifactId>
+    <artifactId>SmsShared</artifactId>
+<build>
+    <plugins>
+    <plugin>
+        <!-- Build an executable JAR -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+            <archive>
+                <manifest>
+                    <addClasspath>true</addClasspath>
+                    <classpathPrefix>lib/</classpathPrefix>
+                    <!--mainClass>example.akka.remote.smsApi.SmsApiServiceMain</mainClass-->
+                </manifest>
+            </archive>
+        </configuration>
+    </plugin>
+    </plugins>
+</build>
 </project>

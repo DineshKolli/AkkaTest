@@ -90,6 +90,15 @@ public class SmsHttpApi extends AllDirectives {
                                     );
                                 })),
                 get(() ->
+                        pathPrefix("smsTotalCount", () -> {
+                            // path(longSegment(), (Long id) -> {
+                            final CompletionStage<Optional<String>> futureMaybeItem = getSmsTotalCount();
+                            return onSuccess(() -> futureMaybeItem, maybeItem ->
+                                    maybeItem.map(item -> completeOK(item, Jackson.marshaller()))
+                                            .orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found"))
+                            );
+                        })),
+                get(() ->
                         pathPrefix("getAllSms", () -> {
                                 //path(longSegment(), (Long id) -> {
                                     final CompletionStage<Optional<List<SmsIncomingMessage>>> futureMaybeItem = fetchSmsList();
@@ -153,6 +162,25 @@ public class SmsHttpApi extends AllDirectives {
         return null;
     }
 
+
+
+    CompletionStage<Optional<String>> getSmsTotalCount()
+    {
+        Timeout timeout = new Timeout(100000, TimeUnit.MILLISECONDS);
+        Future<Object> future = Patterns.ask(selection, "getSmsCount", timeout);
+
+        try {
+            String reply = (String) Await.result(future, timeout.duration());
+            System.out.println("Total SMS requests count in DB is " + reply);
+            return CompletableFuture.completedFuture(Optional.of(reply));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
     CompletionStage<Optional<String>> emptyDatabase()
     {
         Timeout timeout = new Timeout(100000, TimeUnit.MILLISECONDS);
@@ -160,7 +188,7 @@ public class SmsHttpApi extends AllDirectives {
 
         try {
             String reply = (String) Await.result(future, timeout.duration());
-            System.out.println("Total SMS requests count in DB is " + reply);
+            System.out.println("Delete operation is successfull");
             return CompletableFuture.completedFuture(Optional.of(reply));
 
         } catch (Exception e) {

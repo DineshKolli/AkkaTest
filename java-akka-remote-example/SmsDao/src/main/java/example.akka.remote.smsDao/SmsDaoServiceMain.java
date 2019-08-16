@@ -18,7 +18,7 @@ public class SmsDaoServiceMain {
     public static void main(String[] args) {
         //deleteFile();
         if (args.length == 0) {
-            startupClusterNodes(Arrays.asList("2900", "2565"));
+            startupClusterNodes(Arrays.asList("2900", "2901", "2902", "2903", "2904", "2905","2565"));
         } else {
             startupClusterNodes(Arrays.asList(args));
         }

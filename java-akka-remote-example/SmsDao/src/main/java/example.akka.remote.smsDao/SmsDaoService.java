@@ -48,6 +48,10 @@ public class SmsDaoService extends UntypedActor {
     private static final String selectAllUsers =
             "SELECT USERFROM, TO, SMS FROM SMS_DB";
 
+
+    private static final String fetchSmsCount =
+            "SELECT COUNT(*) FROM SMS_DB";
+
     private static final String selectSingleUsers =
             "SELECT USERFROM, TO, SMS FROM SMS_DB WHERE USERFROM =";
 
@@ -82,6 +86,61 @@ public class SmsDaoService extends UntypedActor {
         return foundUsers;
     }
 
+    public String totalCount()
+    {
+        Source<String, NotUsed> slickSource = null;
+        String count = "";
+        slickSource = Slick.source(
+                session, fetchSmsCount, (SlickRow row) -> new String(row.nextString()));
+
+        final CompletionStage<List<String>> foundUsersFuture =
+                slickSource.runWith(Sink.seq(), materializer);
+
+        Set<String> foundUsers = null;
+        try {
+            foundUsers = new HashSet<>(foundUsersFuture.toCompletableFuture().get(30, TimeUnit.SECONDS));
+            ArrayList<String> aList = new ArrayList<String>(foundUsers);
+            log.info("Total Count of SMS in DB " + aList.get(0));
+
+            return aList.get(0);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+        return count;
+    }
+
+    public String emptyDatabase(String delete)
+    {
+
+        final Sink<String, CompletionStage<Done>> slickSink  = Slick.sink(session, emptyDatabase);
+        Set<String> users = new HashSet<>();
+        users.add(delete);
+        Source<String, NotUsed> usersSource = Source.from(users);
+
+
+        final CompletionStage<Done> insertionResultFuture =
+                usersSource.runWith(slickSink, materializer);
+        try {
+            insertionResultFuture.toCompletableFuture().get(5, TimeUnit.SECONDS);
+
+            return "Deleted Successfully";
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+        return "Delete operation failed";
+    }
+
+
     public void insertSMSMessage(SmsDaoMessage.Message message) throws Exception {
         final Sink<SmsDaoMessage.Message, CompletionStage<Done>> slickSink = Slick.sink(session, insertUser);
         Set<SmsDaoMessage.Message> users = new HashSet<>();
@@ -106,26 +165,7 @@ public class SmsDaoService extends UntypedActor {
         }
     }
 
-    public void emptyDatabase(String delete)
-    {
 
-        final Sink<String, CompletionStage<Done>> slickSink  = Slick.sink(session, emptyDatabase);
-        Set<String> users = new HashSet<>();
-        users.add(delete);
-        Source<String, NotUsed> usersSource = Source.from(users);
-
-        final CompletionStage<Done> insertionResultFuture =
-                usersSource.runWith(slickSink, materializer);
-        try {
-            insertionResultFuture.toCompletableFuture().get(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        }
-    }
 
     public void updateSmsCounter(SmsDaoMessage.Message message)
     {
@@ -172,19 +212,13 @@ public class SmsDaoService extends UntypedActor {
             }
             else if(((String) message).equalsIgnoreCase("delete"))
             {
-                emptyDatabase("delete");
+                String operationResult = emptyDatabase("delete");
+                getSender().tell(operationResult, self());
             }
-            else if(((String) message).equalsIgnoreCase("getCount"))
+            else if(((String) message).equalsIgnoreCase("getSmsCount"))
             {
-                Set<SmsDaoMessage.Message> data = fetchSMSDetails(null);
-                ArrayList<SmsDaoMessage.Message> aList = new ArrayList<SmsDaoMessage.Message>(data);
-                getSender().tell(aList, self());
-                Iterator<SmsDaoMessage.Message> it = data.iterator();
-                while(it.hasNext()){
-                    SmsDaoMessage.Message smsData = it.next();
-                    log.info("From {}, To {}, SMS {}", smsData.getFromNumber(), smsData.getToNumber(), smsData.getSmsMessage() );
-                }
-                log.info("------------------> Total number of entries in DB " + data.size());
+                String operationResult = totalCount();
+                getSender().tell(operationResult, self());
             }
             else
             {

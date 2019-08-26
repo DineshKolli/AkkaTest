@@ -14,14 +14,46 @@ import java.util.List;
 
 public class CommonValidationActorMain {
 
+    public static String DAO_IP = "172.27.6.78";
+    public static int DAO_PORT = 5001;
+
     public static void main(String... args) {
-        if (args.length == 0) {
+
+        int additionalConfigPresent = 0;
+
+        for(int i = 0; i < args.length; i++)
+        {
+            if(args[i].toUpperCase().startsWith("DAOIP"))
+            {
+                DAO_IP = args[i+1];
+                additionalConfigPresent = additionalConfigPresent + 2;
+                continue;
+            }
+            else if(args[i].toUpperCase().startsWith("DAOPORT"))
+            {
+                DAO_PORT = (int)Integer.parseInt(args[i+1]);
+                additionalConfigPresent = additionalConfigPresent + 2;
+                continue;
+            }
+
+        }
+
+
+        if (args.length == 0 || args.length == additionalConfigPresent) {
             //startupClusterNodes(Arrays.asList("2556", "2559", "2558", "2557"));
             //startupClusterNodes(Arrays.asList("2556", "2558", "2800", "2559"));
             //startupClusterNodes(Arrays.asList("2556", "2558", "2559"));
             startupClusterNodes(Arrays.asList("2800", "2559", "2556"));
         } else {
-            startupClusterNodes(Arrays.asList(args));
+
+
+            String newArgs[] = new String[args.length-additionalConfigPresent];
+            for(int i = 0; i < newArgs.length; i++)
+            {
+                newArgs[i] = args[additionalConfigPresent+i];
+            }
+
+            startupClusterNodes(Arrays.asList(newArgs));
         }
 
      }
@@ -65,7 +97,7 @@ public class CommonValidationActorMain {
 
         if(port.equalsIgnoreCase("2559")) {
             return ConfigFactory.parseString(
-                    String.format("akka.remote.netty.tcp.port=%s%n", port) + "akka.cluster.roles = [frontend]")
+                    String.format("akka.remote.netty.tcp.port=%s%n", port) +  "akka.cluster.roles = [frontend]")
                     .withFallback(ConfigFactory.load("myRouter"));
         }
         else if(port.equalsIgnoreCase("2800")) {

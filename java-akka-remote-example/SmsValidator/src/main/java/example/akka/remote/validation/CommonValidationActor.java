@@ -20,6 +20,7 @@ public class CommonValidationActor extends UntypedActor {
     private ActorRef dncActor = getContext().actorOf(Props.create(DncCheckService.class), "DncCheckActor");
 
 
+    public static int senderCount = 1;
 
 
    // private ActorSelection selection = getContext().actorSelection("akka.tcp://SmsValidationInterfaceDispatcherCluster@127.0.0.1:2558/user/SmsValidationInterfaceDispatcher");
@@ -47,26 +48,6 @@ public class CommonValidationActor extends UntypedActor {
     //public CommonValidationActor()
     {
         this.publisher = actorSystem.actorOf(Props.create(Publisher.class), "sender2");
-
-        //this.publisher = publisher;
-        /*
-        if(actorSystem == null) {
-            ActorSystem actorSystem2 = ActorSystem.create("SmsValidationCluster", setupClusterNodeConfig("0"));
-            actorSystem2.actorOf(Props.create(SmsValidationInterfaceDispatcher.class), "CommonValidationActor");
-            //ActorRef mediator = DistributedPubSub.get(actorSystem).mediator();
-            publisher = actorSystem2.actorOf(Props.create(Publisher.class), "sender");
-        }
-        else
-        {
-            //ActorSystem actorSystem2 = ActorSystem.apply("SmsValidationInterfaceDispatcherCluster");
-             //= ActorSystem.create("SmsValidationInterfaceDispatcherCluster", setupClusterNodeConfig("2558"));
-            //actorSystem2.actorOf(Props.create(SmsValidationInterfaceDispatcher.class), "SmsValidationInterfaceDispatcher");
-            publisher = getContext().system().actorOf(Props.create(Publisher.class), "sender");
-        }
-            //mediator.tell(new DistributedPubSubMediator.Put(publisher), publisher);
-       //this.publisher = publisher;
-
-         */
     }
 
 
@@ -87,7 +68,7 @@ public class CommonValidationActor extends UntypedActor {
     public boolean performValidation(SmsValidationMessage.Message message)
     {
         boolean validationResult = true;
-        if(message.getFromNumber().length() > 6)
+        if(message.getFromNumber().length() > 9)
         {
             validationResult = false;
         }

@@ -30,7 +30,9 @@ public class SmsDaoService extends UntypedActor {
 
     //private ActorRef loggingActor = getContext().actorOf(Props.create(LoggingActor.class), "LoggingActor");
 
-    private static final SlickSession session = SlickSession.forConfig("database.slick-h2");
+    //private static final SlickSession session = SlickSession.forConfig("database.slick-h2");
+    private static final SlickSession session = SlickSession.forConfig("database.slick-postgres");
+
 
     static ActorSystem system  = null;
     static Materializer materializer = null;
@@ -46,14 +48,14 @@ public class SmsDaoService extends UntypedActor {
 
 
     private static final String selectAllUsers =
-            "SELECT USERFROM, TO, SMS FROM SMS_DB";
+            "SELECT USERFROM, USERTO, SMS FROM SMS_DB";
 
 
     private static final String fetchSmsCount =
             "SELECT COUNT(*) FROM SMS_DB";
 
     private static final String selectSingleUsers =
-            "SELECT USERFROM, TO, SMS FROM SMS_DB WHERE USERFROM =";
+            "SELECT USERFROM, USERTO, SMS FROM SMS_DB WHERE USERFROM=";
 
     private static final Function<String, String>  emptyDatabase =
             (delete) -> "TRUNCATE TABLE SMS_DB";
@@ -63,7 +65,7 @@ public class SmsDaoService extends UntypedActor {
         Source<SmsDaoMessage.Message, NotUsed> slickSource = null;
         if(singleSms != null && singleSms.length() > 0) {
             slickSource =  Slick.source(
-                    session, selectSingleUsers + singleSms, (SlickRow row) -> new SmsDaoMessage.Message(row.nextString(), row.nextString(), row.nextString()));
+                    session, selectSingleUsers + "'"+singleSms+"'", (SlickRow row) -> new SmsDaoMessage.Message(row.nextString(), row.nextString(), row.nextString()));
         }
         else
         {
@@ -161,7 +163,9 @@ public class SmsDaoService extends UntypedActor {
                     .toCompletableFuture()
                     .get(3, TimeUnit.SECONDS);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
+
         }
     }
 
@@ -246,11 +250,12 @@ public class SmsDaoService extends UntypedActor {
         try
         {
             temp = File.createTempFile("D:\\Project\\Akka\\alpakka-slick-h2-test.mv", ".db");
+            //temp = File.createTempFile("/root/dinesh/alpakka-slick-h2-test.mv", ".db");
             boolean exists = temp.exists();
             if(!exists)
             {
                 executeStatement(
-                        "CREATE TABLE SMS_DB(USERFROM VARCHAR(50), TO VARCHAR(50), SMS VARCHAR(50))",
+                        "CREATE TABLE SMS_DB(USERFROM VARCHAR(50), USERTO VARCHAR(50), SMS VARCHAR(50))",
                         session,
                         materializer);
             }

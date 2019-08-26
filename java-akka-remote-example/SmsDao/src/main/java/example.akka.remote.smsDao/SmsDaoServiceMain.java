@@ -15,15 +15,35 @@ import java.util.List;
 
 public class SmsDaoServiceMain {
 
+
+    //public static String DAO_PORT = "2565";
+    public static String DAO_PORT = "5001";
+    public static int ACTOR_COUNT = 4;
+
+
     public static void main(String[] args) {
-        //deleteFile();
-        if (args.length == 0) {
-            startupClusterNodes(Arrays.asList("2900", "2901", "2902", "2903", "2904", "2905","2565"));
-        } else {
-            startupClusterNodes(Arrays.asList(args));
+//        deleteFile();
+
+
+        int additionalConfigPresent = 0;
+        for(int i = 0; i < args.length; i++) {
+            if (args[i].toUpperCase().startsWith("ACTOR_COUNT")) {
+                ACTOR_COUNT = Integer.parseInt(args[i + 1]);
+                additionalConfigPresent = additionalConfigPresent + 2;
+                continue;
+            }
         }
-
-
+        if (args.length == 0) {
+            startupClusterNodes(Arrays.asList("2900",  DAO_PORT));
+            //startupClusterNodes(Arrays.asList("2900",  DAO_PORT));
+        } else {
+            String newArgs[] = new String[args.length-additionalConfigPresent];
+            for(int i = 0; i < newArgs.length; i++)
+            {
+                newArgs[i] = args[additionalConfigPresent+i];
+            }
+            startupClusterNodes(Arrays.asList(newArgs));
+        }
     }
 
 
@@ -35,16 +55,20 @@ public class SmsDaoServiceMain {
             if(port.equalsIgnoreCase("2900"))
             {
                 ActorSystem system  = ActorSystem.create("SmsDaoCluster", setupClusterNodeConfig("2900"));
-                system.actorOf(Props.create(SmsDaoService.class), "SmsDaoService");
+                //for(int i = 0; i < ACTOR_COUNT; i++) {
+                    //system.actorOf(Props.create(SmsDaoService.class), "SmsDaoService" + i);
+                //}
+
+                system.actorOf(Props.create(SmsDaoWorkerRouter.class).withDispatcher("my-dispatcher"), "SmsDaoWorkerRouter");
             }
-            else if(port.equalsIgnoreCase("2565"))
+            else if(port.equalsIgnoreCase(DAO_PORT))
             {
-                ActorSystem system2  = ActorSystem.create("SmsDaoCluster", setupClusterNodeConfig("2565"));
+                ActorSystem system2  = ActorSystem.create("SmsDaoCluster", setupClusterNodeConfig(DAO_PORT));
                 system2.actorOf(Props.create(SmsDaoRouter.class), "SmsDaoRouter");
             }
             else {
                 ActorSystem system  = ActorSystem.create("SmsDaoCluster", setupClusterNodeConfig(port));
-                system.actorOf(Props.create(SmsDaoService.class), "SmsDaoService");
+                system.actorOf(Props.create(SmsDaoWorkerRouter.class), "SmsDaoWorkerRouter");
             }
 
         }
@@ -52,7 +76,7 @@ public class SmsDaoServiceMain {
 
     private static Config setupClusterNodeConfig(String port) {
 
-        if(port.equalsIgnoreCase("2565")) {
+        if(port.equalsIgnoreCase(DAO_PORT)) {
             return ConfigFactory.parseString(
                     String.format("akka.remote.netty.tcp.port=%s%n", port) + "akka.cluster.roles = [frontend]")
                     .withFallback(ConfigFactory.load("myRouter"));

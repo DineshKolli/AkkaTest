@@ -8,6 +8,7 @@ import akka.event.LoggingAdapter;
 import akka.routing.RoundRobinGroup;
 import example.akka.remote.shared.Messages;
 import example.akka.remote.shared.SmsApiMessages;
+import example.akka.remote.shared.SmsDaoMessage;
 import example.akka.remote.shared.SmsValidationMessage;
 
 import java.util.Arrays;
@@ -18,7 +19,10 @@ public class SmsApiService extends UntypedActor {
 
 
 
-    private ActorSelection route = getContext().actorSelection("akka.tcp://SmsValidationCluster@127.0.0.1:2559/user/SmsValidationRouter");
+    private ActorSelection route = getContext().actorSelection("akka.tcp://SmsValidationCluster@" +
+            SmsApiServiceMain.VALIDATION_ROUTER_IP + ":"+ SmsApiServiceMain.VALIDATION_ROUTER_PORT +"/user/SmsValidationRouter");
+    private ActorSelection daoRouter = getContext().actorSelection("akka.tcp://SmsDaoCluster@" +
+            SmsApiServiceMain.DAO_ROUTER_IP + ":" + SmsApiServiceMain.DAO_ROUTER_PORT + "/user/SmsDaoRouter");
 
 
     /*
@@ -54,16 +58,18 @@ public class SmsApiService extends UntypedActor {
             String to = ((SmsApiMessages.Message) message).getToNumber();
             String smsMessage = ((SmsApiMessages.Message) message).getSmsMessage();
 
-            SmsValidationMessage.Message newMessage = new SmsValidationMessage.Message(from, to, smsMessage);
+            //if(!SmsApiServiceMain.DAO_ROUTER_IP.equalsIgnoreCase("127.0.0.1"))
+            {
+                SmsDaoMessage.Message daoMessage = new SmsDaoMessage.Message(from, to, smsMessage);
+                daoRouter.tell(daoMessage, getSelf());
+            }
+            //else {
+            //    SmsValidationMessage.Message newMessage = new SmsValidationMessage.Message(from, to, smsMessage);
+            //    route.tell(newMessage, getSelf());
+            //}
 
-            /*
-            if((loadBalancer++)%2 == 0)
-                selection1.tell(newMessage, getSelf());
-            else
-                selection2.tell(newMessage, getSelf());
-             */
 
-            route.tell(newMessage, getSelf());
+
         }
 
 

@@ -1,6 +1,8 @@
 #!/bin/bash
 
 LOG_LEVEL="ERROR"
+
+
 LOCAL_IP="172.31.8.153"
 
 SEED_NODE_PORT="2556"

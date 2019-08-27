@@ -198,7 +198,8 @@ public class SmsDaoService extends UntypedActor {
             //System.out.println("Start time is " + dtf.format(now));
 
             SmsDaoMessage.Message newMsg = new SmsDaoMessage.Message(from, to , smsMessage + " - time " + dtf.format(now));
-            updateSmsCounter((SmsDaoMessage.Message) newMsg);
+            if(SmsDaoServiceMain.TEST_MODE != 1)
+                updateSmsCounter((SmsDaoMessage.Message) newMsg);
             getSender().tell(new SmsDaoMessage.Response("DAO Operation Done for from " + from), getSelf());
         }
         else if(message instanceof  String) {

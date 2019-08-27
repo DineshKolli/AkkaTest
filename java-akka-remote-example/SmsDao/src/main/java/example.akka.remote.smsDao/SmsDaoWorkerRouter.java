@@ -6,7 +6,10 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.routing.RoundRobinGroup;
+import example.akka.remote.shared.SmsDaoMessage;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
@@ -40,6 +43,38 @@ public class SmsDaoWorkerRouter extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
         log.info("Forwarding the message to Worker");
-        localRouter.forward(message, getContext());
+
+        if(SmsDaoServiceMain.TEST_MODE != 1)
+        {
+            localRouter.forward(message, getContext());
+        }
+        else {
+
+            if (message instanceof SmsDaoMessage.Message) {
+                if(((SmsDaoMessage.Message) message).getFromNumber().equalsIgnoreCase("1"))
+                {
+                    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+                    LocalDateTime now = LocalDateTime.now();
+                    log.error("Start time is " + dtf.format(now));
+                }
+                else {
+                    localRouter.tell(message, getSelf());
+                }
+            } else if (message instanceof SmsDaoMessage.Response) {
+                if(((SmsDaoMessage.Response) message).getMessage().equalsIgnoreCase("DAO Operation Done for from " +
+                        (SmsDaoServiceMain.PUMP_MESSAGES-1)))
+                {
+                    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+                    LocalDateTime now = LocalDateTime.now();
+                    log.error("End time for message {} and time is {}",
+                            ((SmsDaoMessage.Response) message).getMessage(), dtf.format(now));
+
+                }
+                else {
+                    localRouter.forward(message, getContext());
+                }
+            }
+        }
+
     }
 }

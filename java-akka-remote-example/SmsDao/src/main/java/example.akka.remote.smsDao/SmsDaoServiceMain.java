@@ -1,14 +1,18 @@
 package example.akka.remote.smsDao;
 
 import akka.actor.ActorRef;
+import akka.actor.ActorSelection;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.cluster.pubsub.DistributedPubSub;
 import akka.cluster.pubsub.DistributedPubSubMediator;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import example.akka.remote.shared.SmsApiMessages;
+import example.akka.remote.shared.SmsDaoMessage;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,6 +23,11 @@ public class SmsDaoServiceMain {
     //public static String DAO_PORT = "2565";
     public static String DAO_PORT = "5001";
     public static int ACTOR_COUNT = 4;
+    public static int TEST_MODE = 0;
+
+    public static int PUMP_MESSAGES = 1000000;
+
+    static ActorRef localRouter = null;
 
 
     public static void main(String[] args) {
@@ -29,6 +38,16 @@ public class SmsDaoServiceMain {
         for(int i = 0; i < args.length; i++) {
             if (args[i].toUpperCase().startsWith("ACTOR_COUNT")) {
                 ACTOR_COUNT = Integer.parseInt(args[i + 1]);
+                additionalConfigPresent = additionalConfigPresent + 2;
+                continue;
+            }
+            else if (args[i].toUpperCase().startsWith("TEST_MODE")) {
+                TEST_MODE = Integer.parseInt(args[i + 1]);
+                additionalConfigPresent = additionalConfigPresent + 2;
+                continue;
+            }
+            else if (args[i].toUpperCase().startsWith("PUMP_MESSAGES")) {
+                PUMP_MESSAGES = Integer.parseInt(args[i + 1]);
                 additionalConfigPresent = additionalConfigPresent + 2;
                 continue;
             }
@@ -44,6 +63,19 @@ public class SmsDaoServiceMain {
             }
             startupClusterNodes(Arrays.asList(newArgs));
         }
+
+        if(TEST_MODE == 1) {
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("Starting in Test Mode. =============================== ");
+            for(int i = 0; i < PUMP_MESSAGES; i++) {
+                localRouter.tell(new SmsDaoMessage.Message(i+"", "1234567"+i, "This is my SMS "+i), ActorRef.noSender());
+            }
+
+        }
     }
 
 
@@ -55,20 +87,16 @@ public class SmsDaoServiceMain {
             if(port.equalsIgnoreCase("2900"))
             {
                 ActorSystem system  = ActorSystem.create("SmsDaoCluster", setupClusterNodeConfig("2900"));
-                //for(int i = 0; i < ACTOR_COUNT; i++) {
-                    //system.actorOf(Props.create(SmsDaoService.class), "SmsDaoService" + i);
-                //}
-
-                system.actorOf(Props.create(SmsDaoWorkerRouter.class).withDispatcher("my-dispatcher"), "SmsDaoWorkerRouter");
+                localRouter = system.actorOf(Props.create(SmsDaoWorkerRouter.class).withDispatcher("my-dispatcher"), "SmsDaoWorkerRouter");
             }
             else if(port.equalsIgnoreCase(DAO_PORT))
             {
                 ActorSystem system2  = ActorSystem.create("SmsDaoCluster", setupClusterNodeConfig(DAO_PORT));
-                system2.actorOf(Props.create(SmsDaoRouter.class), "SmsDaoRouter");
+                system2.actorOf(Props.create(SmsDaoRouter.class).withDispatcher("my-dispatcher"), "SmsDaoRouter");
             }
             else {
-                ActorSystem system  = ActorSystem.create("SmsDaoCluster", setupClusterNodeConfig(port));
-                system.actorOf(Props.create(SmsDaoWorkerRouter.class), "SmsDaoWorkerRouter");
+                ActorSystem localRouterSystem  = ActorSystem.create("SmsDaoCluster", setupClusterNodeConfig(port));
+                localRouter = localRouterSystem.actorOf(Props.create(SmsDaoWorkerRouter.class).withDispatcher("my-dispatcher"), "SmsDaoWorkerRouter");
             }
 
         }

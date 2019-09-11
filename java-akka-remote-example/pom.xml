@@ -16,6 +16,8 @@
         <module>SmsLoggerEnvironment</module>
         <module>SmsHttp</module>
         <module>SmsGRPC</module>
+        <module>DynamicActor</module>
+        <module>SmsSharding</module>
     </modules>
 
     <dependencies>

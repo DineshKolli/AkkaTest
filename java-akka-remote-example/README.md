@@ -1,11 +1,10 @@
-Akka Remote Example in Java
+Akka POC in Java
 =========================
 
 ## Introduction
-This project was made while testing the Akka Remoting features.
-It contains five modules; a SmsApi, a SmsValidator, a SmsDao and a SmsHttp. 
+It contains five modules; a SmsApi, a SmsValidator, a SmsDao, a SmsHttp, a SmsGrpc, a DynamicActor and a SmsSharding.
 
-##### Shared
+##### SmsShared
 The has the Messages that are shared between all the Actors. 
 
 ##### SmsApi
@@ -23,6 +22,12 @@ The SmsHttp is to send POST & GET requests via HTTP.
 ##### SmsGrpc
 The SmsGrpc is to simulate gRPC client and Server for sending SMS
 
+##### DynamicActor
+The DynamicActor is to simulate Actor creation and deletion test for CallAS scenario
+
+##### SmsSharding
+The SmsSharding is to simulate Sharding functionality for CallAS
+
 
 ## How to run
 You can run the program like every ordinary Java main program. Make sure you have `mvn clean install`ed the project before to get the Akka dependency.
@@ -33,3 +38,5 @@ It's important to run the projects in the following order:
 3. SmsHttp
 4. SmsGrpc
 5. SmsApi
+6. DynamicActor
+7. SmsSharding

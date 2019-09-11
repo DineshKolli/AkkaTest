@@ -24,6 +24,7 @@ public class SmsDaoServiceMain {
     public static String DAO_PORT = "5001";
     public static int ACTOR_COUNT = 4;
     public static int TEST_MODE = 0;
+    public static String DISPATCHER = "my-dispatcher";
 
     public static int PUMP_MESSAGES = 1000000;
 
@@ -48,6 +49,11 @@ public class SmsDaoServiceMain {
             }
             else if (args[i].toUpperCase().startsWith("PUMP_MESSAGES")) {
                 PUMP_MESSAGES = Integer.parseInt(args[i + 1]);
+                additionalConfigPresent = additionalConfigPresent + 2;
+                continue;
+            }
+            else if (args[i].toUpperCase().startsWith("DISPATCHER")) {
+                DISPATCHER = args[i + 1];
                 additionalConfigPresent = additionalConfigPresent + 2;
                 continue;
             }
@@ -87,16 +93,16 @@ public class SmsDaoServiceMain {
             if(port.equalsIgnoreCase("2900"))
             {
                 ActorSystem system  = ActorSystem.create("SmsDaoCluster", setupClusterNodeConfig("2900"));
-                localRouter = system.actorOf(Props.create(SmsDaoWorkerRouter.class).withDispatcher("my-dispatcher"), "SmsDaoWorkerRouter");
+                localRouter = system.actorOf(Props.create(SmsDaoWorkerRouter.class).withDispatcher(DISPATCHER), "SmsDaoWorkerRouter");
             }
             else if(port.equalsIgnoreCase(DAO_PORT))
             {
                 ActorSystem system2  = ActorSystem.create("SmsDaoCluster", setupClusterNodeConfig(DAO_PORT));
-                system2.actorOf(Props.create(SmsDaoRouter.class).withDispatcher("my-dispatcher"), "SmsDaoRouter");
+                system2.actorOf(Props.create(SmsDaoRouter.class).withDispatcher(DISPATCHER), "SmsDaoRouter");
             }
             else {
                 ActorSystem localRouterSystem  = ActorSystem.create("SmsDaoCluster", setupClusterNodeConfig(port));
-                localRouter = localRouterSystem.actorOf(Props.create(SmsDaoWorkerRouter.class).withDispatcher("my-dispatcher"), "SmsDaoWorkerRouter");
+                localRouter = localRouterSystem.actorOf(Props.create(SmsDaoWorkerRouter.class).withDispatcher(DISPATCHER), "SmsDaoWorkerRouter");
             }
 
         }
